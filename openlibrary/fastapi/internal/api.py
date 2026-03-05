@@ -16,7 +16,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel, Field
 
-from openlibrary.fastapi.models import Pagination
+from openlibrary.fastapi.models import Pagination  # noqa: TC001
 from openlibrary.views.loanstats import SINCE_DAYS, get_trending_books
 
 logger = logging.getLogger(__name__)
