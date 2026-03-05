@@ -98,21 +98,32 @@ class TestTrendingBooksEndpoint:
         response.raise_for_status()
         assert response.json()["hours"] == 6
 
-    def test_custom_days_param_is_ignored_for_known_period(self, fastapi_client, mock_get_trending_books):
-        """days param is ignored for known periods; SINCE_DAYS takes precedence."""
-        response = fastapi_client.get("/trending/daily.json?days=99")
+    def test_hours_defaults_to_zero_in_response(self, fastapi_client, mock_get_trending_books):
+        """If hours is not specified, it defaults to 0 in the response."""
+        response = fastapi_client.get("/trending/daily.json")
         response.raise_for_status()
-        assert mock_get_trending_books.call_args.kwargs["since_days"] == 1  # not 99
+        assert response.json()["hours"] == 0
 
     def test_page_zero_returns_422(self, fastapi_client, mock_get_trending_books):
         """page=0 is rejected — page must be >= 1."""
         assert fastapi_client.get("/trending/daily.json?page=0").status_code == 422
         mock_get_trending_books.assert_not_called()
 
-    def test_limit_over_1000_returns_422(self, fastapi_client, mock_get_trending_books):
-        """limit > 1000 is rejected."""
-        assert fastapi_client.get("/trending/daily.json?limit=1001").status_code == 422
-        mock_get_trending_books.assert_not_called()
+    def test_trending_period_literal_matches_since_days(self):
+        """Ensure TrendingPeriod Literal keys exactly match views.loanstats.SINCE_DAYS keys."""
+        from typing import get_args
+
+        from openlibrary.fastapi.internal.api import TrendingPeriod
+        from openlibrary.views.loanstats import SINCE_DAYS
+
+        literal_keys = set(get_args(TrendingPeriod))
+        since_days_keys = set(SINCE_DAYS.keys())
+
+        assert literal_keys == since_days_keys, (
+            "TrendingPeriod Literal must stay in sync with views.loanstats.SINCE_DAYS keys. "
+            f"Missing in Literal: {since_days_keys - literal_keys}. "
+            f"Extra in Literal: {literal_keys - since_days_keys}."
+        )
 
     def test_works_content_in_response(self, fastapi_client, mock_get_trending_books):
         """Works from get_trending_books are mapped through SolrWork and appear in response."""
@@ -151,5 +162,4 @@ class TestOpenAPIDocumentation:
         params = response.json()["paths"]["/trending/{period}.json"]["get"]["parameters"]
         by_name = {p["name"]: p for p in params}
         assert by_name["period"]["description"]
-        assert by_name["limit"]["description"]
         assert by_name["hours"]["description"]

@@ -13,9 +13,10 @@ import logging
 import os
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel, Field
 
+from openlibrary.fastapi.models import Pagination
 from openlibrary.views.loanstats import SINCE_DAYS, get_trending_books
 
 logger = logging.getLogger(__name__)
@@ -32,8 +33,6 @@ TrendingPeriod = Literal["now", "daily", "weekly", "monthly", "yearly", "forever
 
 
 class SolrWork(BaseModel):
-    """Trending work document from Solr."""
-
     key: str
     title: str | None = None
     author_name: list[str] | None = None
@@ -42,8 +41,6 @@ class SolrWork(BaseModel):
 
 
 class TrendingResponse(BaseModel):
-    """Response shape for the trending books endpoint."""
-
     query: str = Field(..., description="Echo of the request path, e.g. /trending/daily")
     works: list[SolrWork] = Field(
         ...,
@@ -59,33 +56,20 @@ async def book_availability():
     pass
 
 
+def parse_comma_separated_list(fields_str: str) -> list[str] | None:
+    return [f.strip() for f in fields_str.split(",") if f.strip()] or None
+
+
 @router.get(
     "/trending/{period}.json",
     include_in_schema=SHOW_INTERNAL_IN_SCHEMA,
     response_model=TrendingResponse,
     response_model_exclude_none=True,
-    summary="Get trending books for a time period",
     description="Returns works sorted by recent activity (reads, loans, etc.)",
-    responses={
-        200: {"model": TrendingResponse},
-        422: {"description": "Invalid period or query parameters"},
-    },
 )
 async def trending_books_api(
-    period: TrendingPeriod,
-    page: Annotated[int, Query(ge=1, description="Page number (1-indexed).")] = 1,
-    limit: Annotated[int, Query(ge=1, le=1000, description="Maximum number of results to return.")] = 100,
-    days: Annotated[
-        int,
-        Query(
-            description=(
-                "**Deprecated.** Custom number of days to look back. "
-                "Has no effect because ``period`` is validated strictly. "
-                "Kept for backward-compatibility with callers."
-            ),
-            deprecated=True,
-        ),
-    ] = 0,
+    period: Annotated[TrendingPeriod, Path(description="The time period for trending books")],
+    pagination: Annotated[Pagination, Depends()],
     hours: Annotated[int, Query(ge=0, description="Custom number of hours to look back.")] = 0,
     sort_by_count: Annotated[
         bool,
@@ -100,23 +84,20 @@ async def trending_books_api(
         Query(description="Comma-separated list of Solr fields to include in each work."),
     ] = "",
 ) -> TrendingResponse:
-    """Fetch trending books for the given period.
-    Unknown period values are rejected with 422.
-    """
+    """Fetch trending books for the given period."""
     # ``period`` is always a key in SINCE_DAYS — guaranteed by the Literal type above.
     since_days: int | None = SINCE_DAYS[period]
-    # Strip whitespace so "key, title" and "key,%20title" both parse cleanly.
-    parsed_fields: list[str] | None = [f.strip() for f in fields.split(",") if f.strip()] or None
+    parsed_fields: list[str] | None = parse_comma_separated_list(fields)
 
+    # get_trending_books is a synchronous DB call; run it in a thread pool to
+    # avoid blocking the async event loop.
     try:
-        # get_trending_books is a synchronous DB call; run it in a thread pool to
-        # avoid blocking the async event loop.
         works = await asyncio.to_thread(
             get_trending_books,
             since_days=since_days,
             since_hours=hours,
-            limit=limit,
-            page=page,
+            limit=pagination.limit,
+            page=pagination.page,
             sort_by_count=sort_by_count,
             minimum=minimum,
             fields=parsed_fields,
