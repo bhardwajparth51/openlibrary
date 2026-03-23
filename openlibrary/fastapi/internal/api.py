@@ -61,8 +61,8 @@ class TrendingRequestParams(Pagination):
     limit: int = Field(100, ge=0, le=1000, description="Maximum number of results per page.")
     hours: int = Field(0, ge=0, description="Custom number of hours to look back.")
     sort_by_count: bool = Field(
-        True,
-        description="Sort results by total log count (most-logged first). Defaults to True, matching the legacy endpoint behaviour.",
+        False,
+        description="Sort results by total log count (most-logged first). Defaults to False, matching the legacy endpoint behaviour.",
     )
     minimum: int = Field(0, ge=0, description="Minimum log count a book must have to be included.")
     fields: Annotated[list[str] | None, BeforeValidator(parse_fields_string)] = Field(
