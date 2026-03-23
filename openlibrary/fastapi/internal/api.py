@@ -12,11 +12,14 @@ import os
 from typing import Annotated, Literal
 
 import web
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Path, Query, status
 from pydantic import BaseModel, BeforeValidator, Field
 
 from openlibrary.core import lending
-from openlibrary.fastapi.models import Pagination, parse_fields_string
+from openlibrary.core.models import Booknotes
+from openlibrary.fastapi.auth import AuthenticatedUser, require_authenticated_user
+from openlibrary.fastapi.models import Pagination, parse_fields_string  # noqa: TC001
+from openlibrary.utils import extract_numeric_id_from_olid
 from openlibrary.utils.request_context import site as site_ctx
 from openlibrary.views.loanstats import SINCE_DAYS, get_trending_books
 
@@ -142,8 +145,43 @@ async def ratings():
     pass
 
 
-async def booknotes():
-    pass
+class BooknoteResponse(BaseModel):
+    success: str = Field(..., description="Status message")
+
+
+@router.post(
+    "/works/OL{work_id}W/notes",
+    response_model=BooknoteResponse,
+    tags=["internal"],
+    include_in_schema=SHOW_INTERNAL_IN_SCHEMA,
+)
+async def booknotes_post(
+    work_id: Annotated[int, Path(gt=0)],
+    user: Annotated[AuthenticatedUser, Depends(require_authenticated_user)],
+    notes: Annotated[str | None, Form()] = None,
+    edition_id: Annotated[str | None, Form(pattern=r"(?i)^OL\d+M$")] = None,
+) -> BooknoteResponse:
+    """
+    Add or remove a note for a work (and optionally a specific edition).
+
+    - If `notes` is provided: create or update the note.
+    - If `notes` is omitted: remove the existing note.
+    """
+    resolved_edition_id = Booknotes.NULL_EDITION_VALUE
+    if edition_id:
+        resolved_edition_id = int(extract_numeric_id_from_olid(edition_id))
+
+    if not notes:
+        Booknotes.remove(user.username, work_id, edition_id=resolved_edition_id)
+        return BooknoteResponse(success="removed note")
+
+    Booknotes.add(
+        username=user.username,
+        work_id=work_id,
+        notes=notes,
+        edition_id=resolved_edition_id,
+    )
+    return BooknoteResponse(success="note added")
 
 
 async def work_bookshelves():
