@@ -18,7 +18,7 @@ from pydantic import BaseModel, BeforeValidator, Field
 from openlibrary.core import lending
 from openlibrary.core.models import Booknotes
 from openlibrary.fastapi.auth import AuthenticatedUser, require_authenticated_user
-from openlibrary.fastapi.models import Pagination, parse_fields_string  # noqa: TC001
+from openlibrary.fastapi.models import Pagination, parse_fields_string
 from openlibrary.utils import extract_numeric_id_from_olid
 from openlibrary.utils.request_context import site as site_ctx
 from openlibrary.views.loanstats import SINCE_DAYS, get_trending_books
