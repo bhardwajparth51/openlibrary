@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel, BeforeValidator, Field
 
 from openlibrary.core import lending
-from openlibrary.fastapi.models import Pagination, parse_fields_string  # noqa: TC001
+from openlibrary.fastapi.models import Pagination, parse_fields_string
 from openlibrary.utils.request_context import site as site_ctx
 from openlibrary.views.loanstats import SINCE_DAYS, get_trending_books
 
