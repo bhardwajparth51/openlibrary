@@ -12,15 +12,15 @@ import os
 from typing import Annotated, Literal
 
 import web
-from fastapi import APIRouter, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel, BeforeValidator, Field
 
-from openlibrary.fastapi.models import Pagination, parse_fields_string
+from openlibrary.core import lending
+from openlibrary.fastapi.models import Pagination, parse_fields_string  # noqa: TC001
 from openlibrary.utils.request_context import site as site_ctx
 from openlibrary.views.loanstats import SINCE_DAYS, get_trending_books
 
 router = APIRouter(tags=["internal"])
-
 SHOW_INTERNAL_IN_SCHEMA = os.getenv("LOCAL_DEV") is not None
 
 # Valid period values — mirrors SINCE_DAYS keys
@@ -108,8 +108,34 @@ def trending_books_api(
     )
 
 
-async def browse():
-    pass
+@router.get(
+    "/browse.json",
+    tags=["internal"],
+    include_in_schema=SHOW_INTERNAL_IN_SCHEMA,
+)
+async def browse(
+    pagination: Annotated[Pagination, Depends()],
+    q: Annotated[str, Query()] = "",
+    subject: Annotated[str, Query()] = "",
+    sorts: Annotated[str, Query()] = "",
+) -> dict:
+    """
+    Dynamically fetches the next page of books and checks if they are
+    available to be borrowed from the Internet Archive without having
+    to reload the whole web page.
+    """
+    sorts_list = [s.strip() for s in sorts.split(",") if s.strip()]
+
+    url = lending.compose_ia_url(
+        query=q,
+        limit=pagination.limit,
+        page=pagination.page,
+        subject=subject,
+        sorts=sorts_list,
+    )
+
+    works = lending.get_available(url=url) if url else []
+    return {"query": url, "works": [work.dict() for work in works]}
 
 
 async def ratings():
