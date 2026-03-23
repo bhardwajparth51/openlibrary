@@ -67,7 +67,7 @@ class TestTrendingBooksEndpoint:
             ("sort_by_count=false", {"sort_by_count": False}),
             ("page=2&limit=10", {"page": 2, "limit": 10}),
             ("fields=key,%20title", {"fields": ["key", "title"]}),
-            ("", {"sort_by_count": True, "fields": None}),
+            ("", {"sort_by_count": False, "fields": None}),
             (
                 "page=3&limit=50&hours=6&sort_by_count=false&minimum=10&fields=key,title",
                 {"page": 3, "limit": 50, "since_hours": 6, "sort_by_count": False, "minimum": 10, "fields": ["key", "title"]},
