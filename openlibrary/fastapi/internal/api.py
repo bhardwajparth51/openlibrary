@@ -33,6 +33,23 @@ SHOW_INTERNAL_IN_SCHEMA = os.getenv("LOCAL_DEV") is not None
 TrendingPeriod = Literal["now", "daily", "weekly", "monthly", "yearly", "forever"]
 
 
+@router.get("/availability/v2", tags=["internal"], include_in_schema=SHOW_INTERNAL_IN_SCHEMA)
+async def book_availability():
+    pass
+
+
+class TrendingRequestParams(Pagination):
+    limit: int = Field(100, ge=0, le=1000, description="Maximum number of results per page.")
+    hours: int = Field(0, ge=0, description="Custom number of hours to look back.")
+    days: int = Field(0, ge=0, description="Custom number of days to look back.")
+    sort_by_count: bool = Field(True, description="Sort results by total log count (most-logged first).")
+    minimum: int = Field(0, ge=0, description="Minimum log count a book must have to be included.")
+    fields: Annotated[list[str] | None, BeforeValidator(parse_fields_string)] = Field(
+        None,
+        description="Comma-separated list of Solr fields to include in each work.",
+    )
+
+
 class SolrWork(BaseModel):
     key: str
     title: str | None = None
@@ -50,23 +67,6 @@ class TrendingResponse(BaseModel):
     )
     days: int | None = Field(default=None, description="Look-back window in days (None = all-time)")
     hours: int = Field(..., description="Look-back window in hours")
-
-
-@router.get("/availability/v2", tags=["internal"], include_in_schema=SHOW_INTERNAL_IN_SCHEMA)
-async def book_availability():
-    pass
-
-
-class TrendingRequestParams(Pagination):
-    limit: int = Field(100, ge=0, le=1000, description="Maximum number of results per page.")
-    hours: int = Field(0, ge=0, description="Custom number of hours to look back.")
-    days: int = Field(0, ge=0, description="Custom number of days to look back.")
-    sort_by_count: bool = Field(True, description="Sort results by total log count (most-logged first).")
-    minimum: int = Field(0, ge=0, description="Minimum log count a book must have to be included.")
-    fields: Annotated[list[str] | None, BeforeValidator(parse_fields_string)] = Field(
-        None,
-        description="Comma-separated list of Solr fields to include in each work.",
-    )
 
 
 @router.get(
