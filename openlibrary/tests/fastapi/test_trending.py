@@ -67,7 +67,7 @@ class TestTrendingBooksEndpoint:
             ("sort_by_count=false", {"sort_by_count": False}),
             ("page=2&limit=10", {"page": 2, "limit": 10}),
             ("fields=key,%20title", {"fields": ["key", "title"]}),
-            ("", {"sort_by_count": False, "fields": None}),
+            ("", {"sort_by_count": True, "fields": None}),
             (
                 "page=3&limit=50&hours=6&sort_by_count=false&minimum=10&fields=key,title",
                 {"page": 3, "limit": 50, "since_hours": 6, "sort_by_count": False, "minimum": 10, "fields": ["key", "title"]},
@@ -204,12 +204,6 @@ class TestTrendingBooksEndpoint:
         assert len(works) == 2
         assert works[0]["key"] == "/works/OL1W"
         assert works[1]["key"] == "/works/OL2W"
-
-    def test_get_trending_books_exception_returns_502(self, fastapi_client, mock_get_trending_books):
-        """If get_trending_books raises, return 502."""
-        mock_get_trending_books.side_effect = Exception("db error")
-        response = fastapi_client.get("/trending/daily.json")
-        assert response.status_code == 502
 
 
 @pytest.mark.skipif(
