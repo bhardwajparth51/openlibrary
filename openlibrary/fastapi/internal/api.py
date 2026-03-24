@@ -23,8 +23,8 @@ from openlibrary.utils import extract_numeric_id_from_olid
 from openlibrary.utils.request_context import site as site_ctx
 from openlibrary.views.loanstats import SINCE_DAYS, get_trending_books
 
-router = APIRouter(tags=["internal"])
 SHOW_INTERNAL_IN_SCHEMA = os.getenv("LOCAL_DEV") is not None
+router = APIRouter(tags=["internal"], include_in_schema=SHOW_INTERNAL_IN_SCHEMA)
 
 # Valid period values — mirrors SINCE_DAYS keys
 # IMPORTANT: Keep this Literal in sync with the keys of views.loanstats.SINCE_DAYS!
@@ -33,7 +33,7 @@ SHOW_INTERNAL_IN_SCHEMA = os.getenv("LOCAL_DEV") is not None
 TrendingPeriod = Literal["now", "daily", "weekly", "monthly", "yearly", "forever"]
 
 
-@router.get("/availability/v2", tags=["internal"], include_in_schema=SHOW_INTERNAL_IN_SCHEMA)
+@router.get("/availability/v2")
 async def book_availability():
     pass
 
@@ -60,18 +60,13 @@ class SolrWork(BaseModel):
 
 class TrendingResponse(BaseModel):
     query: str = Field(..., description="Echo of the request path, e.g. /trending/daily")
-    works: list[SolrWork] = Field(
-        ...,
-        description="Trending work documents from Solr",
-        min_length=0,
-    )
+    works: list[SolrWork] = Field(..., description="Trending work documents from Solr")
     days: int | None = Field(default=None, description="Look-back window in days (None = all-time)")
     hours: int = Field(..., description="Look-back window in hours")
 
 
 @router.get(
     "/trending/{period}.json",
-    include_in_schema=SHOW_INTERNAL_IN_SCHEMA,
     response_model=TrendingResponse,
     response_model_exclude_none=True,
     description="Returns works sorted by recent activity (reads, loans, etc.)",
@@ -106,11 +101,7 @@ def trending_books_api(
     )
 
 
-@router.get(
-    "/browse.json",
-    tags=["internal"],
-    include_in_schema=SHOW_INTERNAL_IN_SCHEMA,
-)
+@router.get("/browse.json")
 async def browse(
     pagination: Annotated[Pagination, Depends()],
     q: Annotated[str, Query()] = "",
@@ -144,12 +135,7 @@ class BooknoteResponse(BaseModel):
     success: str = Field(..., description="Status message")
 
 
-@router.post(
-    "/works/OL{work_id}W/notes",
-    response_model=BooknoteResponse,
-    tags=["internal"],
-    include_in_schema=SHOW_INTERNAL_IN_SCHEMA,
-)
+@router.post("/works/OL{work_id}W/notes", response_model=BooknoteResponse)
 async def booknotes_post(
     work_id: Annotated[int, Path(gt=0)],
     user: Annotated[AuthenticatedUser, Depends(require_authenticated_user)],
