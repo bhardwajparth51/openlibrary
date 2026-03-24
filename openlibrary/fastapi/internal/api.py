@@ -33,16 +33,95 @@ router = APIRouter(tags=["internal"], include_in_schema=SHOW_INTERNAL_IN_SCHEMA)
 TrendingPeriod = Literal["now", "daily", "weekly", "monthly", "yearly", "forever"]
 
 
-@router.get("/availability/v2")
-async def book_availability():
-    pass
+
+class AvailabilityStatusV2(BaseModel):
+    """Model matching the shape of book availability data returned by IA/Lending."""
+
+    status: Literal["borrow_available", "borrow_unavailable", "open", "error"] = Field(
+        ..., description="Availability status of the book"
+    )
+    error_message: str | None = None
+
+    available_to_browse: bool | None = None
+    available_to_borrow: bool | None = None
+    available_to_waitlist: bool | None = None
+
+    is_printdisabled: bool | None = None
+    is_readable: bool | None = None
+    is_lendable: bool | None = None
+    is_previewable: bool = False
+    is_restricted: bool = False
+    is_browseable: bool | None = None
+
+    identifier: str | None = None
+    isbn: str | None = None
+    oclc: str | None = None
+    openlibrary_work: str | None = None
+    openlibrary_edition: str | None = None
+
+    last_loan_date: str | None = None
+    num_waitlist: str | None = None
+    last_waitlist_date: str | None = None
+
+    model_config = {"extra": "allow"}
+
+
+AvailabilityIDType = Literal["openlibrary_work", "openlibrary_edition", "identifier"]
+
+
+class AvailabilityRequest(BaseModel):
+    """Request body for bulk book availability queries (POST)."""
+
+    ids: Annotated[list[str], Field(..., min_length=1, description="List of identifiers")]
+
+
+@router.get(
+    "/availability/v2",
+    response_model=dict[str, AvailabilityStatusV2 | str],
+    response_model_exclude_none=True,
+    description="Returns availability status for one or more books (via query params)",
+)
+def get_book_availability(
+    id_type: Annotated[AvailabilityIDType, Query(alias="type", description="Type of the identifiers")],
+    ids: Annotated[
+        list[str],
+        BeforeValidator(parse_comma_separated_list),
+        Query(
+            min_length=1, description="Comma-separated list of IDs (e.g. OL123W, ISBN, ocaid)"
+        ),
+    ],
+) -> dict[str, AvailabilityStatusV2 | str]:
+    """Fetch availability status for one or more books via GET."""
+    # ANTIPATTERN: web.ctx.site is required for legacy lending.py (tracked in #12178)
+    web.ctx.site = site_ctx.get()
+    res = lending.get_availability(id_type, ids)
+    return {k: AvailabilityStatusV2.model_validate(v) if isinstance(v, dict) else v for k, v in res.items()}
+
+
+@router.post(
+    "/availability/v2",
+    response_model=dict[str, AvailabilityStatusV2 | str],
+    response_model_exclude_none=True,
+    description="Returns availability status for one or more books (via JSON body)",
+)
+def post_book_availability(
+    id_type: Annotated[AvailabilityIDType, Query(alias="type")],
+    request: AvailabilityRequest,
+) -> dict[str, AvailabilityStatusV2 | str]:
+    """Retrieve availability status for one or more books via POST."""
+    # ANTIPATTERN: web.ctx.site is required for legacy lending.py (tracked in #12178)
+    web.ctx.site = site_ctx.get()
+    res = lending.get_availability(id_type, request.ids)
+    return {k: AvailabilityStatusV2.model_validate(v) if isinstance(v, dict) else v for k, v in res.items()}
 
 
 class TrendingRequestParams(Pagination):
     limit: int = Field(100, ge=0, le=1000, description="Maximum number of results per page.")
     hours: int = Field(0, ge=0, description="Custom number of hours to look back.")
     days: int = Field(0, ge=0, description="Custom number of days to look back.")
-    sort_by_count: bool = Field(True, description="Sort results by total log count (most-logged first).")
+    sort_by_count: bool = Field(
+        True, description="Sort results by total log count (most-logged first). Defaults to True to match legacy behaviour."
+    )
     minimum: int = Field(0, ge=0, description="Minimum log count a book must have to be included.")
     fields: Annotated[list[str] | None, BeforeValidator(parse_comma_separated_list)] = Field(
         None,
@@ -77,7 +156,7 @@ def trending_books_api(
 ) -> TrendingResponse:
     """Fetch trending books for the given period."""
     # ``period`` is always a key in SINCE_DAYS — guaranteed by the Literal type above.
-    since_days: int | None = SINCE_DAYS.get(period, params.days)
+    since_days: int | None = SINCE_DAYS[period]
 
     # Setting web.ctx.site is an ANTIPATTERN and we should avoid it elsewhere.
     # It will be removed via #12178
