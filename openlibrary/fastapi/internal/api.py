@@ -12,7 +12,7 @@ import os
 from typing import Annotated, Literal
 
 import web
-from fastapi import APIRouter, Depends, Form, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, Form, Path, Query
 from pydantic import BaseModel, BeforeValidator, Field
 
 from openlibrary.core import lending
@@ -85,23 +85,20 @@ def trending_books_api(
     """Fetch trending books for the given period."""
     # ``period`` is always a key in SINCE_DAYS — guaranteed by the Literal type above.
     since_days: int | None = SINCE_DAYS[period]
+
+    # Setting web.ctx.site is an ANTIPATTERN and we should avoid it elsewhere.
+    # It will be removed via #12178
     web.ctx.site = site_ctx.get()
 
-    try:
-        works = get_trending_books(
-            since_days=since_days,
-            since_hours=params.hours,
-            limit=params.limit,
-            page=params.page,
-            sort_by_count=params.sort_by_count,
-            minimum=params.minimum,
-            fields=params.fields,
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Failed to fetch trending books from database.",
-        ) from e
+    works = get_trending_books(
+        since_days=since_days,
+        since_hours=params.hours,
+        limit=params.limit,
+        page=params.page,
+        sort_by_count=params.sort_by_count,
+        minimum=params.minimum,
+        fields=params.fields,
+    )
 
     return TrendingResponse(
         query=f"/trending/{period}",
