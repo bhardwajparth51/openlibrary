@@ -30,7 +30,7 @@ class PaginationLimit20(Pagination):
     limit: int = Field(20, ge=0, description="Maximum number of results to return.")
 
 
-def parse_fields_string(v: str | list[str] | None) -> list[str]:
+def parse_comma_separated_list(v: str | list[str] | None) -> list[str]:
     if not v:
         return []
     if isinstance(v, str):

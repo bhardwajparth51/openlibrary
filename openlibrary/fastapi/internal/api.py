@@ -18,7 +18,7 @@ from pydantic import BaseModel, BeforeValidator, Field
 from openlibrary.core import lending
 from openlibrary.core.models import Booknotes
 from openlibrary.fastapi.auth import AuthenticatedUser, require_authenticated_user
-from openlibrary.fastapi.models import Pagination, parse_fields_string
+from openlibrary.fastapi.models import Pagination, parse_comma_separated_list
 from openlibrary.utils import extract_numeric_id_from_olid
 from openlibrary.utils.request_context import site as site_ctx
 from openlibrary.views.loanstats import SINCE_DAYS, get_trending_books
@@ -44,7 +44,7 @@ class TrendingRequestParams(Pagination):
     days: int = Field(0, ge=0, description="Custom number of days to look back.")
     sort_by_count: bool = Field(True, description="Sort results by total log count (most-logged first).")
     minimum: int = Field(0, ge=0, description="Minimum log count a book must have to be included.")
-    fields: Annotated[list[str] | None, BeforeValidator(parse_fields_string)] = Field(
+    fields: Annotated[list[str] | None, BeforeValidator(parse_comma_separated_list)] = Field(
         None,
         description="Comma-separated list of Solr fields to include in each work.",
     )

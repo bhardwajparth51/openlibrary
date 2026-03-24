@@ -22,7 +22,7 @@ from openlibrary.fastapi.models import (
     Pagination,
     PaginationLimit20,
     SolrInternalsParams,
-    parse_fields_string,
+    parse_comma_separated_list,
 )
 from openlibrary.plugins.worksearch.code import (
     default_spellcheck_count,
@@ -98,7 +98,7 @@ class PublicQueryOptions(BaseModel):
 
 
 class SearchRequestParams(PublicQueryOptions, Pagination):
-    fields: Annotated[list[str], BeforeValidator(parse_fields_string)] = Field(
+    fields: Annotated[list[str], BeforeValidator(parse_comma_separated_list)] = Field(
         sorted(WorkSearchScheme.default_fetched_fields),
         description="The fields to return.",
     )
