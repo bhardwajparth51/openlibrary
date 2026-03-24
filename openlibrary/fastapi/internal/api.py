@@ -60,10 +60,8 @@ async def book_availability():
 class TrendingRequestParams(Pagination):
     limit: int = Field(100, ge=0, le=1000, description="Maximum number of results per page.")
     hours: int = Field(0, ge=0, description="Custom number of hours to look back.")
-    sort_by_count: bool = Field(
-        False,
-        description="Sort results by total log count (most-logged first). Defaults to False, matching the legacy endpoint behaviour.",
-    )
+    days: int = Field(0, ge=0, description="Custom number of days to look back.")
+    sort_by_count: bool = Field(True, description="Sort results by total log count (most-logged first).")
     minimum: int = Field(0, ge=0, description="Minimum log count a book must have to be included.")
     fields: Annotated[list[str] | None, BeforeValidator(parse_fields_string)] = Field(
         None,
@@ -84,7 +82,7 @@ def trending_books_api(
 ) -> TrendingResponse:
     """Fetch trending books for the given period."""
     # ``period`` is always a key in SINCE_DAYS — guaranteed by the Literal type above.
-    since_days: int | None = SINCE_DAYS[period]
+    since_days: int | None = SINCE_DAYS.get(period, params.days)
 
     # Setting web.ctx.site is an ANTIPATTERN and we should avoid it elsewhere.
     # It will be removed via #12178
