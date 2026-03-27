@@ -36,7 +36,7 @@ TrendingPeriod = Literal["now", "daily", "weekly", "monthly", "yearly", "forever
 class AvailabilityStatusV2(BaseModel):
     """Model matching the shape of book availability data returned by IA/Lending."""
 
-    status: Literal["borrow_available", "borrow_unavailable", "open", "error"] = Field(..., description="Availability status of the book")
+    status: str = Field(..., description="Availability status of the book")
     error_message: str | None = None
 
     available_to_browse: bool | None = None
