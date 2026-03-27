@@ -81,34 +81,6 @@ class TestBookAvailabilityEndpoint:
         assert response.status_code == 422
         mock_get_availability.assert_not_called()
 
-    def test_get_availability_legacy_error_passthrough(self, fastapi_client, mock_get_availability):
-        """
-        In exceptional cases, lending.get_availability returns top-level error keys
-        as strings (e.g. 'error': 'request_timeout'). These must pass through.
-        """
-        mock_get_availability.return_value = {"id1": "error"}
-        response = fastapi_client.get("/availability/v2", params={"type": "openlibrary_work", "ids": "id1"})
-        assert response.status_code == 200
-        assert response.json() == {"id1": "error"}
-
-    def test_response_model_exclude_none(self, fastapi_client, mock_get_availability):
-        mock_get_availability.return_value = {
-            "id1": {
-                "status": "open",
-                "is_previewable": True,
-                "is_restricted": False,
-                # everything else is None or missing
-            }
-        }
-        response = fastapi_client.get("/availability/v2?type=identifier&ids=id1")
-        response.raise_for_status()
-        data = response.json()
-
-        # Check only keys present in our mock return are present in the JSON
-        assert set(data["id1"].keys()) == {"status", "is_previewable", "is_restricted"}
-        assert "isbn" not in data["id1"]
-        assert "available_to_borrow" not in data["id1"]
-
 
 @pytest.mark.skipif(
     os.getenv("LOCAL_DEV") is None,

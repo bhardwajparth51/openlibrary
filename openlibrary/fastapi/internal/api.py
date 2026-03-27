@@ -74,8 +74,7 @@ class AvailabilityRequest(BaseModel):
 
 @router.get(
     "/availability/v2",
-    response_model=dict[str, AvailabilityStatusV2 | str],
-    response_model_exclude_none=True,
+    response_model=dict[str, AvailabilityStatusV2],
     description="Returns availability status for one or more books",
 )
 def get_book_availability(
@@ -85,23 +84,20 @@ def get_book_availability(
         BeforeValidator(parse_comma_separated_list),
         Query(min_length=1, description="Comma-separated list of IDs (e.g. OL123W, ISBN, ocaid)"),
     ],
-) -> dict[str, AvailabilityStatusV2 | str]:
-    res = lending.get_availability(id_type, ids)
-    return {k: AvailabilityStatusV2.model_validate(v) if isinstance(v, dict) else v for k, v in res.items()}
+) -> dict:
+    return lending.get_availability(id_type, ids)
 
 
 @router.post(
     "/availability/v2",
-    response_model=dict[str, AvailabilityStatusV2 | str],
-    response_model_exclude_none=True,
+    response_model=dict[str, AvailabilityStatusV2],
     description="Returns availability status for one or more books",
 )
 def post_book_availability(
     id_type: Annotated[AvailabilityIDType, Query(alias="type")],
     request: AvailabilityRequest,
-) -> dict[str, AvailabilityStatusV2 | str]:
-    res = lending.get_availability(id_type, request.ids)
-    return {k: AvailabilityStatusV2.model_validate(v) if isinstance(v, dict) else v for k, v in res.items()}
+) -> dict:
+    return lending.get_availability(id_type, request.ids)
 
 
 class TrendingRequestParams(Pagination):
