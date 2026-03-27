@@ -37,7 +37,7 @@ class AvailabilityStatusV2(BaseModel):
     """Model matching the shape of book availability data returned by IA/Lending."""
 
     status: str = Field(..., description="Availability status of the book")
-    error_message: str | None = None
+    # error_message: str | None = None
 
     available_to_browse: bool | None = None
     available_to_borrow: bool | None = None
