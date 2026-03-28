@@ -2,6 +2,7 @@
 
 import os
 import sys
+
 import yaml
 
 import infogami
@@ -22,12 +23,12 @@ def _patch_infogami():
         # Support both <engine, database, username, password, port> and <dbn, db, user, pw, port>.
         # If it's a partial dict (e.g. only contains 'driver' from openlibrary.yml),
         # return it as-is to avoid a KeyError('db') and ensure the driver survives.
-        if isinstance(d, dict) and 'database' not in d and 'db' not in d:
+        if isinstance(d, dict) and "database" not in d and "db" not in d:
             return d
-        
+
         result = _orig_parse(d)
-        if result and isinstance(d, dict) and 'driver' in d:
-            result['driver'] = d['driver']
+        if result and isinstance(d, dict) and "driver" in d:
+            result["driver"] = d["driver"]
         return result
 
     _new_parse._is_patched = True
