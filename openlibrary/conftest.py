@@ -59,7 +59,7 @@ def setup_db_config():
     from infogami import config
 
     # Set web.config.db_parameters for OLConnection
-    web.config.db_parameters = {}
+    web.config.db_parameters = {"driver": "psycopg"}
 
     # Set infobase_parameters to use local connection instead of OLConnection
     # This prevents the database configuration error when tests run
@@ -156,7 +156,7 @@ def render_template(request):
 
     from openlibrary.plugins.openlibrary import code
 
-    web.config.db_parameters = {}
+    web.config.db_parameters = {"driver": "psycopg"}
     code.setup_template_globals()
 
     def render(name, *a, **kw):
