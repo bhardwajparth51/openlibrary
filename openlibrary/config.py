@@ -2,12 +2,40 @@
 
 import os
 import sys
-
 import yaml
 
 import infogami
 from infogami import config
-from infogami.infobase import server
+from infogami.infobase import server as infobase_server
+
+
+# Patch infogami to handle partial db_parameters (like just a driver hint)
+# and ensure the 'driver' key is preserved during configuration parsing.
+def _patch_infogami():
+    _orig_parse = infobase_server.parse_db_parameters
+    if getattr(_orig_parse, "_is_patched", False):
+        return
+
+    def _new_parse(d):
+        if d is None:
+            return None
+        # Support both <engine, database, username, password, port> and <dbn, db, user, pw, port>.
+        # If it's a partial dict (e.g. only contains 'driver' from openlibrary.yml),
+        # return it as-is to avoid a KeyError('db') and ensure the driver survives.
+        if isinstance(d, dict) and 'database' not in d and 'db' not in d:
+            return d
+        
+        result = _orig_parse(d)
+        if result and isinstance(d, dict) and 'driver' in d:
+            result['driver'] = d['driver']
+        return result
+
+    _new_parse._is_patched = True
+    infobase_server.parse_db_parameters = _new_parse
+
+
+_patch_infogami()
+
 
 runtime_config = {}
 
@@ -41,7 +69,7 @@ def load_config(config_file):
     setup_infobase_config(config_file)
 
     # This sets web.config.db_parameters
-    server.update_config(config.infobase)
+    infobase_server.update_config(config.infobase)
 
 
 def setup_infobase_config(config_file):
