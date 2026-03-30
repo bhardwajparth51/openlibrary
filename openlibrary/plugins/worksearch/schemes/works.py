@@ -7,7 +7,6 @@ from types import MappingProxyType
 from typing import Any, cast
 
 import luqum.tree
-import web
 from typing_extensions import deprecated
 
 import infogami
@@ -37,6 +36,7 @@ from openlibrary.utils.lcc import (
     short_lcc_to_sortable_lcc,
 )
 from openlibrary.utils.request_context import req_context
+from openlibrary.utils.request_context import site as site_ctx
 
 logger = logging.getLogger("openlibrary.worksearch")
 re_author_key = re.compile(r'(OL\d+A)')
@@ -648,9 +648,7 @@ class WorkSearchScheme(SearchScheme):
                 for ed_doc in doc.get('editions', {}).get('docs', [])
             ]
 
-        from openlibrary.utils.request_context import site as site_ctx
-
-        site = site_ctx.get() or getattr(web.ctx, 'site', None)
+        site = site_ctx.get()
         assert site, "No site context found"
         things = cast(list[Work | Edition], site.get_many(keys))
         key_to_thing = {t.key: t for t in things if t.key in keys}
