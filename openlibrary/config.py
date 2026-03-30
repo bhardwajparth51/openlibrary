@@ -3,8 +3,8 @@
 import os
 import sys
 
-import yaml
 import web
+import yaml
 
 import infogami
 from infogami import config
