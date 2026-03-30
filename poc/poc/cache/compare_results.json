@@ -1,0 +1,146 @@
+[
+  {
+    "title": "The Call of the Wild",
+    "ia_id": "callofwild00londrich",
+    "text_conf": 0.85,
+    "meta_conf": 0.7,
+    "total_tokens": 2887,
+    "cost": 0.00015080000000000003
+  },
+  {
+    "title": "Leaves of Grass",
+    "ia_id": "leavesofgrass00whitmala",
+    "text_conf": 0.75,
+    "meta_conf": 0.5,
+    "total_tokens": 2566,
+    "cost": 0.00013481000000000002
+  },
+  {
+    "title": "Robinson Crusoe",
+    "ia_id": "robinsoncrusoe00defo",
+    "text_conf": 0.9,
+    "meta_conf": 0.6,
+    "total_tokens": 2932,
+    "cost": 0.00015256999999999998
+  },
+  {
+    "title": "The Scarlet Letter",
+    "ia_id": "scarletletter00hawt",
+    "text_conf": 0.85,
+    "meta_conf": 0.6,
+    "total_tokens": 3093,
+    "cost": 0.00016164
+  },
+  {
+    "title": "A Tale of Two Cities",
+    "ia_id": "taleoftwocities01dick",
+    "text_conf": 0.95,
+    "meta_conf": 0.7,
+    "total_tokens": 2868,
+    "cost": 0.00015021000000000001
+  },
+  {
+    "title": "Treasure Island",
+    "ia_id": "treasureisland00stev",
+    "text_conf": 0.9,
+    "meta_conf": 0.6,
+    "total_tokens": 3025,
+    "cost": 0.00015758
+  },
+  {
+    "title": "Walden",
+    "ia_id": "walden00thor",
+    "text_conf": 0.9,
+    "meta_conf": 0.7,
+    "total_tokens": 2722,
+    "cost": 0.0001442
+  },
+  {
+    "title": "Wuthering Heights",
+    "ia_id": "wutheringheight00bron",
+    "text_conf": 0.9,
+    "meta_conf": 0.7,
+    "total_tokens": 2924,
+    "cost": 0.00015265
+  },
+  {
+    "title": "Adventures of Huckleberry Finn",
+    "ia_id": "adventuresofhuckl00twai",
+    "text_conf": 0.85,
+    "meta_conf": 0.6,
+    "total_tokens": 2517,
+    "cost": 0.00013212
+  },
+  {
+    "title": "Pride and Prejudice",
+    "ia_id": "prideandprejudice00aust",
+    "text_conf": 0.9,
+    "meta_conf": 0.6,
+    "total_tokens": 2499,
+    "cost": 0.00013107
+  },
+  {
+    "title": "Great Expectations",
+    "ia_id": "greatexpectatio00dick",
+    "text_conf": 0.75,
+    "meta_conf": 0.7,
+    "total_tokens": 3069,
+    "cost": 0.00016152
+  },
+  {
+    "title": "Crime and Punishment",
+    "ia_id": "crimeandpunishme00dost",
+    "text_conf": 0.7999999999999999,
+    "meta_conf": 0.5499999999999999,
+    "total_tokens": 2356,
+    "cost": 0.0001244
+  },
+  {
+    "title": "The Metamorphosis",
+    "ia_id": "metamorphosis00kafk",
+    "text_conf": 0.8,
+    "meta_conf": 0.7,
+    "total_tokens": 2174,
+    "cost": 0.00011497
+  },
+  {
+    "title": "The Iliad",
+    "ia_id": "iliad00home",
+    "text_conf": 0.8,
+    "meta_conf": 0.5499999999999999,
+    "total_tokens": 2815,
+    "cost": 0.00014648
+  },
+  {
+    "title": "The Jungle Book",
+    "ia_id": "junglebook00kipl",
+    "text_conf": 0.8,
+    "meta_conf": 0.6,
+    "total_tokens": 3079,
+    "cost": 0.00015992000000000003
+  },
+  {
+    "title": "Dracula",
+    "ia_id": "draculabram00stok",
+    "text_conf": 0.9,
+    "meta_conf": 0.8,
+    "total_tokens": 2429,
+    "cost": 0.00012781
+  },
+  {
+    "title": "Moby-Dick",
+    "ia_id": "mobydickorwhale00melv",
+    "text_conf": 0.9,
+    "meta_conf": 0.7,
+    "total_tokens": 2862,
+    "cost": 0.00014946000000000002
+  },
+  {
+    "title": "Alice's Adventures in Wonderland",
+    "ia_id": "alicesadventure00carr",
+    "text_conf": 0.8999999999999999,
+    "meta_conf": 0.6,
+    "total_tokens": 2561,
+    "cost": 0.00013333
+  }
+]

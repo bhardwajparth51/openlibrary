@@ -216,6 +216,16 @@
                 "key": "/type/property"
             },
             "name": "covers"
+        },
+        {
+            "expected_type": {
+                "key": "/type/string"
+            },
+            "unique": false,
+            "type": {
+                "key": "/type/property"
+            },
+            "name": "genres"
         }
     ],
     "revision": 14

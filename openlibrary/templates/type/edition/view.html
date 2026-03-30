@@ -331,6 +331,18 @@ $ worldcat_links = macros.WorldcatLink(isbn=isbn_13 or isbn_10, oclc_numbers=ocl
               <a href="$work.key?edition=$(e.ocaid)">$get_language_name(e.languages[0].key, user_lang)</a>
         </p>
 
+    <div style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #f8fafc; display: inline-block; width: 100%;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin-bottom: 1em; color: #0f172a; display: flex; align-items: center;">
+        <svg style="width: 18px; height: 18px; margin-right: 6px; color: #64748b;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+        Genres
+      </h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <span style="background-color: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">Adventure</span>
+        <span style="background-color: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">Action</span>
+        <span style="background-color: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">Young Adult</span>
+      </div>
+    </div>
+
     <div class="subjects">
       <div class="subjects-content">
         $ component_times['SubjectsTags'] = time()
