@@ -129,7 +129,6 @@ class LocalPostgresDataProvider(DataProvider):
             cursor_name or 'solr_builder_server_side_cursor_' + uuid.uuid4().hex
         )
         cur = self._conn.cursor(name=cursor_name)
-        cur.itersize = size
         cur.execute(query)
 
         while True:

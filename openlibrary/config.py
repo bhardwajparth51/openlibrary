@@ -4,38 +4,41 @@ import os
 import sys
 
 import yaml
+import web
 
 import infogami
 from infogami import config
 from infogami.infobase import server as infobase_server
 
 
-# Patch infogami to handle partial db_parameters (like just a driver hint)
-# and ensure the 'driver' key is preserved during configuration parsing.
-def _patch_infogami():
-    _orig_parse = infobase_server.parse_db_parameters
-    if getattr(_orig_parse, "_is_patched", False):
+# TODO: Remove once infogami supports psycopg3 natively (#10258)
+def _patch_infogami_for_psycopg3():
+    """
+    Temporary patch: wraps infogami's parse_db_parameters to preserve
+    the 'driver' key, which infogami currently strips out.
+    """
+    orig = infobase_server.parse_db_parameters
+    if getattr(orig, "_is_patched", False):
         return
 
-    def _new_parse(d):
-        if d is None:
-            return None
-        # Support both <engine, database, username, password, port> and <dbn, db, user, pw, port>.
-        # If it's a partial dict (e.g. only contains 'driver' from openlibrary.yml),
-        # return it as-is to avoid a KeyError('db') and ensure the driver survives.
-        if isinstance(d, dict) and "database" not in d and "db" not in d:
-            return d
+    def patched(d):
+        try:
+            result = orig(d)
+        except KeyError as e:
+            # Only handle missing 'db'/'database' — let other KeyErrors propagate
+            if isinstance(d, dict) and "driver" in d and e.args[0] in ("db", "database"):
+                return d
+            raise
 
-        result = _orig_parse(d)
         if result and isinstance(d, dict) and "driver" in d:
             result["driver"] = d["driver"]
         return result
 
-    _new_parse._is_patched = True
-    infobase_server.parse_db_parameters = _new_parse
+    patched._is_patched = True
+    infobase_server.parse_db_parameters = patched
 
 
-_patch_infogami()
+_patch_infogami_for_psycopg3()
 
 
 runtime_config = {}
@@ -71,6 +74,11 @@ def load_config(config_file):
 
     # This sets web.config.db_parameters
     infobase_server.update_config(config.infobase)
+
+    # Safety net: ensure driver survives update_config
+    # TODO: Remove once infogami is updated (#10258)
+    if isinstance(web.config.get("db_parameters"), dict):
+        web.config.db_parameters.setdefault("driver", "psycopg")
 
 
 def setup_infobase_config(config_file):
