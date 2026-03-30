@@ -11,7 +11,6 @@ from __future__ import annotations
 import os
 from typing import Annotated, Literal
 
-import web
 from fastapi import APIRouter, Depends, Form, Path, Query
 from pydantic import BaseModel, BeforeValidator, Field
 
@@ -20,7 +19,6 @@ from openlibrary.core.models import Booknotes
 from openlibrary.fastapi.auth import AuthenticatedUser, require_authenticated_user
 from openlibrary.fastapi.models import Pagination, parse_comma_separated_list
 from openlibrary.utils import extract_numeric_id_from_olid
-from openlibrary.utils.request_context import site as site_ctx
 from openlibrary.views.loanstats import SINCE_DAYS, get_trending_books
 
 SHOW_INTERNAL_IN_SCHEMA = os.getenv("LOCAL_DEV") is not None
@@ -78,10 +76,6 @@ def trending_books_api(
     """Fetch trending books for the given period."""
     # ``period`` is always a key in SINCE_DAYS — guaranteed by the Literal type above.
     since_days: int | None = SINCE_DAYS.get(period, params.days)
-
-    # Setting web.ctx.site is an ANTIPATTERN and we should avoid it elsewhere.
-    # It will be removed via #12178
-    web.ctx.site = site_ctx.get()
 
     works = get_trending_books(
         since_days=since_days,

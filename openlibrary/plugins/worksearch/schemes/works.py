@@ -648,7 +648,11 @@ class WorkSearchScheme(SearchScheme):
                 for ed_doc in doc.get('editions', {}).get('docs', [])
             ]
 
-        things = cast(list[Work | Edition], web.ctx.site.get_many(keys))
+        from openlibrary.utils.request_context import site as site_ctx
+
+        site = site_ctx.get() or getattr(web.ctx, 'site', None)
+        assert site, "No site context found"
+        things = cast(list[Work | Edition], site.get_many(keys))
         key_to_thing = {t.key: t for t in things if t.key in keys}
 
         from openlibrary.book_providers import get_acquisitions
