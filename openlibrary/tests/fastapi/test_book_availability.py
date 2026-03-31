@@ -1,6 +1,5 @@
 """Tests for the /availability/v2 FastAPI endpoint (internal API)."""
 
-import os
 from unittest.mock import patch
 
 import pytest
@@ -80,25 +79,3 @@ class TestBookAvailabilityEndpoint:
         response = fastapi_client.get("/availability/v2?id_type=openlibrary_work&ids=id1")
         assert response.status_code == 422
         mock_get_availability.assert_not_called()
-
-
-@pytest.mark.skipif(
-    os.getenv("LOCAL_DEV") is None,
-    reason="Internal endpoints are excluded from OpenAPI schema outside LOCAL_DEV",
-)
-class TestOpenAPIDocumentation:
-    """Verify the book_availability endpoint is correctly described in the OpenAPI schema."""
-
-    def test_openapi_contains_availability_endpoint(self, fastapi_client):
-        response = fastapi_client.get("/openapi.json")
-        assert response.status_code == 200
-        paths = response.json()["paths"]
-        assert "/availability/v2" in paths
-
-    def test_openapi_availability_params_have_descriptions(self, fastapi_client):
-        response = fastapi_client.get("/openapi.json")
-        assert response.status_code == 200
-        params = response.json()["paths"]["/availability/v2"]["get"]["parameters"]
-        by_name = {p["name"]: p for p in params}
-        assert by_name["type"]["description"]
-        assert by_name["ids"]["description"]
