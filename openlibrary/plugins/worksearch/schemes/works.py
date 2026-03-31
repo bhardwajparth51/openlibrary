@@ -35,8 +35,7 @@ from openlibrary.utils.lcc import (
     normalize_lcc_range,
     short_lcc_to_sortable_lcc,
 )
-from openlibrary.utils.request_context import req_context
-from openlibrary.utils.request_context import site as site_ctx
+from openlibrary.utils.request_context import req_context, site
 
 logger = logging.getLogger("openlibrary.worksearch")
 re_author_key = re.compile(r'(OL\d+A)')
@@ -648,9 +647,7 @@ class WorkSearchScheme(SearchScheme):
                 for ed_doc in doc.get('editions', {}).get('docs', [])
             ]
 
-        site = site_ctx.get()
-        assert site, "No site context found"
-        things = cast(list[Work | Edition], site.get_many(keys))
+        things = cast(list[Work | Edition], site.get().get_many(keys))
         key_to_thing = {t.key: t for t in things if t.key in keys}
 
         from openlibrary.book_providers import get_acquisitions
