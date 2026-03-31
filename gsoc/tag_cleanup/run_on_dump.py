@@ -215,7 +215,7 @@ def print_report(sample_stats: dict, enrich_stats: dict, elapsed: float):
     print(sep)
 
     # ── Subject Distribution ──────────────────────────────────────────────────
-    print("\n📊  RAW SUBJECT DISTRIBUTION")
+    print("\n-- RAW SUBJECT DISTRIBUTION")
     print("-" * 80)
     s = sample_stats
     print(
@@ -235,7 +235,7 @@ def print_report(sample_stats: dict, enrich_stats: dict, elapsed: float):
 
     # ── Enrichment Results ───────────────────────────────────────────────────
     print(
-        f"\n🔖  ENRICHMENT RESULTS  (n={enrich_stats['processed']:,} works with subjects)"
+        f"\n-- ENRICHMENT RESULTS  (n={enrich_stats['processed']:,} works with subjects)"
     )
     print("-" * 80)
     e = enrich_stats
@@ -249,7 +249,7 @@ def print_report(sample_stats: dict, enrich_stats: dict, elapsed: float):
     for level in ("excellent", "good", "basic", "poor"):
         cnt = e["quality_distribution"].get(level, 0)
         pct = cnt / e["processed"] * 100 if e["processed"] else 0
-        bar = "█" * int(pct / 2)
+        bar = "-" * int(pct / 2)
         print(f"    {level:<10} : {cnt:>6,} ({pct:5.1f}%) {bar}")
 
     print("\n  Top genres detected:")
@@ -278,7 +278,7 @@ def print_report(sample_stats: dict, enrich_stats: dict, elapsed: float):
     TOTAL_WORKS_APPROX = 30_000_000  # rough OL total
     genre_cov_frac = e["genre_coverage_pct"] / 100
     print(
-        f"\n📈  SCALE PROJECTION  (extrapolated to {TOTAL_WORKS_APPROX:,} total works)"
+        f"\n-- SCALE PROJECTION  (extrapolated to {TOTAL_WORKS_APPROX:,} total works)"
     )
     print("-" * 80)
     has_subj_frac = s["subjects_pct"] / 100
@@ -292,7 +292,7 @@ def print_report(sample_stats: dict, enrich_stats: dict, elapsed: float):
 
     # ── Performance ──────────────────────────────────────────────────────────
     rate = e["processed"] / elapsed if elapsed > 0 else 0
-    print("\n⏱   PERFORMANCE")
+    print("\n-- PERFORMANCE")
     print("-" * 80)
     print(f"  Works enriched         : {e['processed']:>10,}")
     print(f"  Wall-clock time        : {elapsed:>10.1f} s")
@@ -337,7 +337,7 @@ def main():
     sample_limit = None if args.all else args.sample
     enrich_limit = args.enrich_limit
 
-    print(f"\n🚀 Tag Cleanup POC — reading dump: {args.dump}")
+    print(f"\nTag Cleanup POC — reading dump: {args.dump}")
     if sample_limit:
         print(f"   Sampling first {sample_limit:,} works  (use --all for full dump)")
 
@@ -353,7 +353,7 @@ def main():
             print(f"    {i+1:>8,} works read  ({elapsed:.1f}s)", flush=True)
 
     load_elapsed = time.perf_counter() - t0
-    print(f"  ✓ Loaded {len(works):,} works in {load_elapsed:.1f}s")
+    print(f"  Loaded {len(works):,} works in {load_elapsed:.1f}s")
 
     # ── 2. Analyse raw subjects ──────────────────────────────────────────────
     print("\n  Analysing subjects...", flush=True)
@@ -376,7 +376,7 @@ def main():
                 json.dumps(result) + "\n" for result in enrich_stats["enriched_results"]
             )
         print(
-            f"  💾 Saved {len(enrich_stats['enriched_results']):,} enriched results → {out_path}\n"
+            f"  Saved {len(enrich_stats['enriched_results']):,} enriched results -> {out_path}\n"
         )
 
 
