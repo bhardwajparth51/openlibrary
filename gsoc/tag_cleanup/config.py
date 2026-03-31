@@ -4,6 +4,9 @@ Configuration for Tag Cleanup POC.
 Allows centralized control of enrichment parameters, thresholds, and behaviors.
 """
 
+from typing import Any
+
+
 # ============================================================================
 # ENRICHMENT PARAMETERS
 # ============================================================================
@@ -70,7 +73,7 @@ ENRICHED_WORKS_OUTPUT = "enriched_works.jsonl"
 # ============================================================================
 
 
-def get_config_summary() -> dict[str, any]:
+def get_config_summary() -> dict[str, Any]:
     """Get human-readable configuration summary."""
     return {
         "Minimum Genre Confidence": f"{MIN_GENRE_CONFIDENCE:.0%}",

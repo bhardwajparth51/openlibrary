@@ -14,7 +14,7 @@ This schema enables:
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 
 @dataclass
@@ -210,7 +210,7 @@ class GenomeFactory:
 
     @staticmethod
     def enrich_with_genres(
-        genome: BookGenome, genres: list[str], confidences: dict[str, float] = None
+        genome: BookGenome, genres: list[str], confidences: Optional[dict[str, float]] = None
     ):
         """Add genres to genome with optional confidence scores."""
         genome.genres = genres
@@ -221,7 +221,7 @@ class GenomeFactory:
 
     @staticmethod
     def enrich_with_moods(
-        genome: BookGenome, moods: list[str], confidences: dict[str, float] = None
+        genome: BookGenome, moods: list[str], confidences: Optional[dict[str, float]] = None
     ):
         """Add moods to genome with optional confidence scores."""
         genome.moods = moods

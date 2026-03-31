@@ -9,6 +9,7 @@ import hashlib
 import os
 import sys
 from datetime import datetime
+from typing import Optional
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 sys.path.insert(
@@ -34,8 +35,8 @@ class Tag:
         self,
         label: str,
         tag_type: TagType,
-        name_i18n: dict[str, str] = None,
-        description_i18n: dict[str, str] = None,
+        name_i18n: Optional[dict[str, str]] = None,
+        description_i18n: Optional[dict[str, str]] = None,
         key: str | None = None,
     ):
         self.label = label.lower().replace(" ", "_")
@@ -112,8 +113,8 @@ class TagManager:
         self,
         label: str,
         tag_type: TagType,
-        name_i18n: dict[str, str] = None,
-        description_i18n: dict[str, str] = None,
+        name_i18n: Optional[dict[str, str]] = None,
+        description_i18n: Optional[dict[str, str]] = None,
     ) -> Tag:
         """Create and register a new tag."""
         # Validate uniqueness

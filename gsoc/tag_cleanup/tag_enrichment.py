@@ -35,7 +35,7 @@ class WorkEnricher:
         self.title = work.get("title", "Unknown")
         self.subjects = work.get("subjects", [])
         self.genome: BookGenome | None = None
-        self.enrichment_results = {}
+        self.enrichment_results: dict = {}
 
     def enrich(self) -> dict:
         """Run complete enrichment pipeline."""
@@ -120,7 +120,7 @@ class BulkWorkEnricher:
     def __init__(self, works: list[dict], dry_run: bool = True):
         self.works = works
         self.dry_run = dry_run
-        self.enriched_works = []
+        self.enriched_works: list[dict] = []
         self.stats = {
             "total_processed": 0,
             "successfully_enriched": 0,
