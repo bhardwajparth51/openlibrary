@@ -17,17 +17,17 @@ export function initAffiliateLinks(affiliateLinksSections) {
             if (entry.isIntersecting) {
                 // Unregister intersection listener
                 intersectionObserver.unobserve(entry.target)
-                
+
                 const section = entry.target
                 const loadingIndicator = section.querySelector('.loadingIndicator')
-                
+
                 if (loadingIndicator) {
                     loadingIndicator.classList.remove('hidden')
-                    
+
                     const title = section.dataset.title
                     const opts = JSON.parse(section.dataset.opts)
                     const data = {args: [title, opts]}
-                    
+
                     getPartials(data, section)
                 }
             }
@@ -64,8 +64,8 @@ async function getPartials(data, section) {
             const template = document.createElement('template')
             template.innerHTML = respData.partials
             const newContent = template.content.querySelector('.affiliate-links-section')
-            
-            // If the partial returns the whole span (it usually does), 
+
+            // If the partial returns the whole span (it usually does),
             // use its children to replace our current contents.
             // This maintains the 'section' reference and prevents nested wrappers.
             if (newContent) {
@@ -75,6 +75,7 @@ async function getPartials(data, section) {
             }
         })
         .catch((err) => {
+            // eslint-disable-next-line no-console
             console.error('Error fetching affiliate links:', err)
             if (loadingIndicator) {
                 loadingIndicator.classList.add('hidden')
