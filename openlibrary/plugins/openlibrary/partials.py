@@ -259,10 +259,9 @@ class AffiliateLinksPartial(PartialDataHandler):
 
                 if amz_task and len(results) > 1:
                     res2 = results[1]
-                    if isinstance(res2, dict):
-                        # Prioritize direct Amazon price
-                        if res2.get('price'):
-                            amazon_price = res2.get('price')
+                    # Prioritize direct Amazon price
+                    if isinstance(res2, dict) and res2.get('price'):
+                        amazon_price = res2.get('price')
 
         opts['prepared_stores'] = get_affiliate_stores(
             title,
