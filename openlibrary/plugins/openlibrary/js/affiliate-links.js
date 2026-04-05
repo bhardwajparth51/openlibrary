@@ -1,56 +1,56 @@
 import { buildPartialsUrl } from './utils'
 
 /**
- * Adds functionality to fetch affialite links asyncronously.
+ * Adds functionality to fetch affiliate links asynchronously.
  *
- * Fetches and attaches partials to DOM _iff_ any of the given affiliate link
- * sections contain a loading indicator.  Adds affordance for retrying if the
- * call for partials fails.
+ * Fetches and attaches partials to DOM iff any of the given affiliate link
+ * sections contain a loading indicator. Uses IntersectionObserver to delay
+ * fetching until the section is visible.
  *
  * @param {NodeList<HTMLElement>} affiliateLinksSections Collection of each affiliate links section that is on the page
  */
 export function initAffiliateLinks(affiliateLinksSections) {
-    const isLoading = showLoadingIndicators(affiliateLinksSections)
-    if (isLoading) {
-        // Replace loading indicators with fetched partials
+    if (!affiliateLinksSections.length) return
 
-        const title = affiliateLinksSections[0].dataset.title
-        const opts = JSON.parse(affiliateLinksSections[0].dataset.opts)
-        const args = [title, opts]
-        const d = {args: args}
+    const intersectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Unregister intersection listener
+                intersectionObserver.unobserve(entry.target)
+                
+                const section = entry.target
+                const loadingIndicator = section.querySelector('.loadingIndicator')
+                
+                if (loadingIndicator) {
+                    loadingIndicator.classList.remove('hidden')
+                    
+                    const title = section.dataset.title
+                    const opts = JSON.parse(section.dataset.opts)
+                    const data = {args: [title, opts]}
+                    
+                    getPartials(data, section)
+                }
+            }
+        })
+    }, {
+        root: null,
+        rootMargin: '200px',
+        threshold: 0
+    })
 
-        getPartials(d, affiliateLinksSections)
-    }
-}
-
-/**
- * Removes `hidden` class from any loading indicators nested within the given
- * elements.
- *
- * @param {NodeList<HTMLElement>} linkSections
- * @returns {boolean} `true` if a loading indicator is displayed on the screen
- */
-function showLoadingIndicators(linkSections) {
-    let isLoading = false
-    for (const section of linkSections) {
-        const loadingIndicator = section.querySelector('.loadingIndicator')
-        if (loadingIndicator) {
-            isLoading = true
-            loadingIndicator.classList.remove('hidden')
-        }
-    }
-    return isLoading
+    affiliateLinksSections.forEach(section => intersectionObserver.observe(section))
 }
 
 /**
  * Fetches rendered affiliate links template using the given arguments.
  *
  * @param {object} data Contains array of positional arguments for the template
- * @param {NodeList<HTMLElement>} affiliateLinksSections
+ * @param {HTMLElement} section The specific section to update
  * @returns {Promise}
  */
-async function getPartials(data, affiliateLinksSections) {
+async function getPartials(data, section) {
     const dataString = JSON.stringify(data)
+    const loadingIndicator = section.querySelector('.loadingIndicator')
 
     return fetch(buildPartialsUrl('AffiliateLinks', {data: dataString}))
         .then((resp) => {
@@ -59,33 +59,41 @@ async function getPartials(data, affiliateLinksSections) {
             }
             return resp.json()
         })
-        .then((data) => {
-            const span = document.createElement('span')
-            span.innerHTML = data['partials']
-            const links = span.firstElementChild
-            for (const section of affiliateLinksSections) {
-                section.replaceWith(links.cloneNode(true))
+        .then((respData) => {
+            // Replace loading indicator with partials
+            const template = document.createElement('template')
+            template.innerHTML = respData.partials
+            const newContent = template.content.querySelector('.affiliate-links-section')
+            
+            // If the partial returns the whole span (it usually does), 
+            // use its children to replace our current contents.
+            // This maintains the 'section' reference and prevents nested wrappers.
+            if (newContent) {
+                section.replaceChildren(...Array.from(newContent.childNodes))
+            } else {
+                section.replaceChildren(...Array.from(template.content.childNodes))
             }
         })
-        .catch(() => {
-            // XXX : Handle errors sensibly
-            for (const section of affiliateLinksSections) {
-                const loadingIndicator = section.querySelector('.loadingIndicator')
-                if (loadingIndicator) {
-                    loadingIndicator.classList.add('hidden')
-                }
+        .catch((err) => {
+            console.error('Error fetching affiliate links:', err)
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('hidden')
+            }
 
-                const existingRetryAffordance = section.querySelector('.affiliate-links-section__retry')
-                if (existingRetryAffordance) {
-                    existingRetryAffordance.classList.remove('hidden')
-                } else {
-                    section.insertAdjacentHTML('afterbegin', renderRetryLink())
-                    const retryAffordance = section.querySelector('.affiliate-links-section__retry')
-                    retryAffordance.addEventListener('click', () => {
-                        retryAffordance.classList.add('hidden')
-                        getPartials(data, affiliateLinksSections)
-                    })
-                }
+            const existingRetryAffordance = section.querySelector('.affiliate-links-section__retry')
+            if (existingRetryAffordance) {
+                existingRetryAffordance.classList.remove('hidden')
+            } else {
+                section.insertAdjacentHTML('afterbegin', renderRetryLink())
+                const retryAffordance = section.querySelector('.affiliate-links-section__retry')
+                retryAffordance.addEventListener('click', (e) => {
+                    e.preventDefault()
+                    retryAffordance.classList.add('hidden')
+                    if (loadingIndicator) {
+                        loadingIndicator.classList.remove('hidden')
+                    }
+                    getPartials(data, section)
+                })
             }
         })
 }

@@ -1,12 +1,20 @@
+import asyncio
 from abc import ABC, abstractmethod
 from datetime import datetime
 from urllib.parse import parse_qs
 
+import httpx
 import web
 from pydantic import BaseModel
 
 from infogami.utils.view import render_template
 from openlibrary.accounts import get_current_user
+from openlibrary.core.helpers import affiliate_id
+from openlibrary.core.vendors import (
+    get_amazon_metadata_async,
+    get_betterworldbooks_metadata_async,
+    get_affiliate_stores,
+)
 from openlibrary.core.fulltext import fulltext_search_async
 from openlibrary.core.lending import compose_ia_url, get_available
 from openlibrary.i18n import gettext as _
@@ -31,6 +39,14 @@ class PartialDataHandler(ABC):
     @abstractmethod
     def generate(self) -> dict:
         pass
+
+    async def generate_async(self) -> dict:
+        """Async version of generate.
+
+        By default, calls the synchronous generate method. Subclasses
+        can override this to provide a fully asynchronous implementation.
+        """
+        return self.generate()
 
 
 class ReadingGoalProgressPartial(PartialDataHandler):
@@ -203,6 +219,63 @@ class AffiliateLinksPartial(PartialDataHandler):
             raise ValueError("Unexpected amount of arguments")
 
         macro = web.template.Template.globals['macros'].AffiliateLinks(args[0], args[1])
+        return {"partials": str(macro)}
+
+    async def generate_async(self) -> dict:
+        from openlibrary.plugins.openlibrary.code import is_bot
+
+        args = self.data.get("args", [])
+        if len(args) < 2:
+            raise ValueError("Unexpected amount of arguments")
+
+        title, opts = args[0], args[1]
+        prices = opts.get('prices')
+        isbn = opts.get('isbn', '')
+        asin = opts.get('asin', '')
+
+        bwb_price = amazon_price = None
+
+        # Fetch price data async with a shared client Parallelized
+        if not is_bot() and prices and isbn:
+            async with httpx.AsyncClient() as client:
+                bwb_task = get_betterworldbooks_metadata_async(isbn, client=client)
+                amz_task = None
+                if asin or isbn:
+                    amz_task = get_amazon_metadata_async(
+                        isbn, resources='prices', client=client
+                    )
+
+                tasks = [bwb_task]
+                if amz_task:
+                    tasks.append(amz_task)
+
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+
+                # Process results safely
+                bwb_metadata = results[0] if not isinstance(results[0], Exception) else None
+                amz_metadata = None
+                if amz_task:
+                    amz_metadata = results[1] if not isinstance(results[1], Exception) else None
+
+                if bwb_metadata:
+                    bwb_price = bwb_metadata.get('price')
+                    # BWB often includes a market_price (Amazon); initialize with it as a fallback
+                    amazon_price = bwb_metadata.get('market_price')
+
+                # Prefer the more current direct Amazon API price if available
+                if amz_metadata and amz_metadata.get('price'):
+                    amazon_price = amz_metadata.get('price')
+
+        opts['prepared_stores'] = get_affiliate_stores(
+            title,
+            {
+                'isbn': isbn,
+                'asin': asin,
+                'bwb_price': bwb_price,
+                'amazon_price': amazon_price,
+            },
+        )
+        macro = web.template.Template.globals['macros'].AffiliateLinks(title, opts)
         return {"partials": str(macro)}
 
 
