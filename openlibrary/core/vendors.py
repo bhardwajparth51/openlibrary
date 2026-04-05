@@ -755,7 +755,7 @@ def get_affiliate_stores(title: str, opts: dict) -> dict[str, list[dict]]:
     """A central place to build store data (links, names, and prices).
     
     We use this in both the standard AffiliateLinks macro and the new
-    async partial so they stay perfectly in sync.
+    async partial so they stay in sync.
     """
     isbn = opts.get('isbn', '')
     asin = opts.get('asin', '')
