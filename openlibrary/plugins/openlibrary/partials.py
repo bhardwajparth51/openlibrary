@@ -42,8 +42,9 @@ class PartialDataHandler(ABC):
     async def generate_async(self) -> dict:
         """Async version of generate.
 
-        By default, calls the synchronous generate method. Subclasses
-        can override this to provide a fully asynchronous implementation.
+        Subclasses can override this to fire off parallel network requests
+        or other async tasks. By default, it just falls back to the
+        standard synchronous generate method.
         """
         return self.generate()
 

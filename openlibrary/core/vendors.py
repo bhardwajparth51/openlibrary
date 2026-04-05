@@ -752,10 +752,10 @@ def _parse_betterworldbooks_response(
 
 @public
 def get_affiliate_stores(title: str, opts: dict) -> dict[str, list[dict]]:
-    """Helper to build all the store data (links, names, and prices).
+    """A central place to build store data (links, names, and prices).
     
-    Both the AffiliateLinks macro and the async partial use this so
-    they stay perfectly in sync.
+    We use this in both the standard AffiliateLinks macro and the new
+    async partial so they stay perfectly in sync.
     """
     isbn = opts.get('isbn', '')
     asin = opts.get('asin', '')
@@ -817,12 +817,10 @@ def betterworldbooks_fmt(
     price: str | None = None,
     market_price: list[str] | None = None,
 ) -> BetterWorldBooksMetadata:
-    """Standardizes how we return BWB price info.
+    """Standardizes how we return price info from Better World Books.
     
-    Arguments:
-    - isbn: the book's identifier
-    - qlt: "new", "used", etc
-    - price: the decimal price string
+    We collect the raw price and quality info here to make it easier
+    to display in the UI or use for comparison.
     """
     price_fmt = f"${price} ({qlt})" if price and qlt else None
     try:
