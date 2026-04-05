@@ -753,7 +753,7 @@ def _parse_betterworldbooks_response(
 @public
 def get_affiliate_stores(title: str, opts: dict) -> dict[str, list[dict]]:
     """A central place to build store data (links, names, and prices).
-    
+
     We use this in both the standard AffiliateLinks macro and the new
     async partial so they stay in sync.
     """
@@ -818,7 +818,7 @@ def betterworldbooks_fmt(
     market_price: list[str] | None = None,
 ) -> BetterWorldBooksMetadata:
     """Standardizes how we return price info from Better World Books.
-    
+
     We collect the raw price and quality info here to make it easier
     to display in the UI or use for comparison.
     """
