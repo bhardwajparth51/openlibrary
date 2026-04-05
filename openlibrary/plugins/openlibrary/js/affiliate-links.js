@@ -60,14 +60,14 @@ async function getPartials(data, section) {
             return resp.json()
         })
         .then((respData) => {
-            // Replace loading indicator with partials
+            // Swap the loading spinner with our new partial content.
             const template = document.createElement('template')
             template.innerHTML = respData.partials
             const newContent = template.content.querySelector('.affiliate-links-section')
-
-            // If the partial returns the whole span (it usually does),
-            // use its children to replace our current contents.
-            // This maintains the 'section' reference and prevents nested wrappers.
+            
+            // The partial usually contains the wrapper span, so we just grab its 
+            // children and drop them into the current section. This keeps our 
+            // 'section' reference valid for retries and avoids double-nesting.
             if (newContent) {
                 section.replaceChildren(...Array.from(newContent.childNodes))
             } else {

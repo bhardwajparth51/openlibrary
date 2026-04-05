@@ -22,13 +22,13 @@ from openlibrary import accounts
 from openlibrary.catalog.add_book import load
 from openlibrary.core import cache
 from openlibrary.core import helpers as h
+from openlibrary.i18n import gettext as _
 from openlibrary.utils import dateutil, uniq
 from openlibrary.utils.isbn import (
     isbn_10_to_isbn_13,
     isbn_13_to_isbn_10,
     normalize_isbn,
 )
-from openlibrary.i18n import gettext as _
 
 logger = logging.getLogger("openlibrary.vendors")
 
@@ -36,7 +36,9 @@ BETTERWORLDBOOKS_API_URL = (
     'https://products.betterworldbooks.com/service.aspx?IncludeAmazon=True&ItemId='
 )
 affiliate_server_url = None
-BWB_AFFILIATE_LINK_TEMPLATE = 'http://www.anrdoezrs.net/links/{}/type/dlg/http://www.betterworldbooks.com/-id-%s'
+BWB_AFFILIATE_LINK_TEMPLATE = (
+    'http://www.anrdoezrs.net/links/{}/type/dlg/http://www.betterworldbooks.com/-id-%s'
+)
 AMAZON_FULL_DATE_RE = re.compile(r'\d{4}-\d\d-\d\d')
 ISBD_UNIT_PUNCT = ' : '  # ISBD cataloging title-unit separator punctuation
 
@@ -752,9 +754,10 @@ def _parse_betterworldbooks_response(
 
 @public
 def get_affiliate_stores(title: str, opts: dict) -> dict[str, list[dict]]:
-    """Constructs the dictionary of store data (links, names, price info).
-
-    Used by both the AffiliateLinks macro and the AffiliateLinksPartial.
+    """Helper to build all the store data (links, names, and prices).
+    
+    Both the AffiliateLinks macro and the async partial use this so
+    they stay perfectly in sync.
     """
     isbn = opts.get('isbn', '')
     asin = opts.get('asin', '')
@@ -816,10 +819,12 @@ def betterworldbooks_fmt(
     price: str | None = None,
     market_price: list[str] | None = None,
 ) -> BetterWorldBooksMetadata:
-    """Defines a standard interface for returning bwb price info
-
-    :param str qlt: Quality of the book, e.g. "new", "used"
-    :param str price: Price of the book as a decimal str, e.g. "4.28"
+    """Standardizes how we return BWB price info.
+    
+    Arguments:
+    - isbn: the book's identifier
+    - qlt: "new", "used", etc
+    - price: the decimal price string
     """
     price_fmt = f"${price} ({qlt})" if price and qlt else None
     try:

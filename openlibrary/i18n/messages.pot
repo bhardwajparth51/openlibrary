@@ -38,6 +38,22 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
+#: openlibrary/core/vendors.py
+msgid "Better World Books"
+msgstr ""
+
+#: openlibrary/core/vendors.py
+msgid " - includes shipping"
+msgstr ""
+
+#: openlibrary/core/vendors.py
+msgid "Amazon"
+msgstr ""
+
+#: openlibrary/core/vendors.py
+msgid "Bookshop.org"
+msgstr ""
+
 #: AffiliateLinks.html
 #, python-format
 msgid "Look for this edition for sale at %(store)s"
@@ -45,22 +61,6 @@ msgstr ""
 
 #: AffiliateLinks.html
 msgid "Fetching prices"
-msgstr ""
-
-#: AffiliateLinks.html
-msgid "Better World Books"
-msgstr ""
-
-#: AffiliateLinks.html
-msgid " - includes shipping"
-msgstr ""
-
-#: AffiliateLinks.html
-msgid "Amazon"
-msgstr ""
-
-#: AffiliateLinks.html
-msgid "Bookshop.org"
 msgstr ""
 
 #: AffiliateLinks.html home/about.html search/work_search_facets.html

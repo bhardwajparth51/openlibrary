@@ -9,14 +9,13 @@ from pydantic import BaseModel
 
 from infogami.utils.view import render_template
 from openlibrary.accounts import get_current_user
-from openlibrary.core.helpers import affiliate_id
-from openlibrary.core.vendors import (
-    get_amazon_metadata_async,
-    get_betterworldbooks_metadata_async,
-    get_affiliate_stores,
-)
 from openlibrary.core.fulltext import fulltext_search_async
 from openlibrary.core.lending import compose_ia_url, get_available
+from openlibrary.core.vendors import (
+    get_affiliate_stores,
+    get_amazon_metadata_async,
+    get_betterworldbooks_metadata_async,
+)
 from openlibrary.i18n import gettext as _
 from openlibrary.plugins.openlibrary.lists import get_lists_async, get_user_lists
 from openlibrary.plugins.upstream.yearly_reading_goals import get_reading_goals
@@ -235,7 +234,7 @@ class AffiliateLinksPartial(PartialDataHandler):
 
         bwb_price = amazon_price = None
 
-        # Fetch price data async with a shared client Parallelized
+        # We'll fire off both provider requests at once to save time
         if not is_bot() and prices and isbn:
             async with httpx.AsyncClient() as client:
                 bwb_task = get_betterworldbooks_metadata_async(isbn, client=client)
@@ -252,14 +251,18 @@ class AffiliateLinksPartial(PartialDataHandler):
                 results = await asyncio.gather(*tasks, return_exceptions=True)
 
                 # Process results safely
-                bwb_metadata = results[0] if not isinstance(results[0], Exception) else None
+                bwb_metadata = (
+                    results[0] if not isinstance(results[0], Exception) else None
+                )
                 amz_metadata = None
                 if amz_task:
-                    amz_metadata = results[1] if not isinstance(results[1], Exception) else None
+                    amz_metadata = (
+                        results[1] if not isinstance(results[1], Exception) else None
+                    )
 
                 if bwb_metadata:
                     bwb_price = bwb_metadata.get('price')
-                    # BWB often includes a market_price (Amazon); initialize with it as a fallback
+                    # Use BWB's market price as a backup if we don't have a direct Amazon price
                     amazon_price = bwb_metadata.get('market_price')
 
                 # Prefer the more current direct Amazon API price if available
