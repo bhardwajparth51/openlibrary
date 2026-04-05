@@ -64,9 +64,9 @@ async function getPartials(data, section) {
             const template = document.createElement('template')
             template.innerHTML = respData.partials
             const newContent = template.content.querySelector('.affiliate-links-section')
-            
-            // The partial usually contains the wrapper span, so we just grab its 
-            // children and drop them into the current section. This keeps our 
+
+            // The partial usually contains the wrapper span, so we just grab its
+            // children and drop them into the current section. This keeps our
             // 'section' reference valid for retries and avoids double-nesting.
             if (newContent) {
                 section.replaceChildren(...Array.from(newContent.childNodes))
