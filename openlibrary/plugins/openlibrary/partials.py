@@ -250,24 +250,19 @@ class AffiliateLinksPartial(PartialDataHandler):
 
                 results = await asyncio.gather(*tasks, return_exceptions=True)
 
-                # Process results safely
-                bwb_metadata = (
-                    results[0] if not isinstance(results[0], Exception) else None
-                )
-                amz_metadata = None
-                if amz_task:
-                    amz_metadata = (
-                        results[1] if not isinstance(results[1], Exception) else None
-                    )
+                # Process results safely with explicit type narrowing for MyPy
+                res1 = results[0]
+                if isinstance(res1, dict):
+                    bwb_price = res1.get('price')
+                    # Fallback to BWB's market price
+                    amazon_price = res1.get('market_price')
 
-                if bwb_metadata:
-                    bwb_price = bwb_metadata.get('price')
-                    # Use BWB's market price as a backup if we don't have a direct Amazon price
-                    amazon_price = bwb_metadata.get('market_price')
-
-                # Prefer the more current direct Amazon API price if available
-                if amz_metadata and amz_metadata.get('price'):
-                    amazon_price = amz_metadata.get('price')
+                if amz_task and len(results) > 1:
+                    res2 = results[1]
+                    if isinstance(res2, dict):
+                        # Prioritize direct Amazon price
+                        if res2.get('price'):
+                            amazon_price = res2.get('price')
 
         opts['prepared_stores'] = get_affiliate_stores(
             title,

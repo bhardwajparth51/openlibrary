@@ -411,7 +411,6 @@ async def get_amazon_metadata_async(
     resources: Any = None,
     high_priority: bool = False,
     stage_import: bool = True,
-    timeout: float = 4.0,
     client: httpx.AsyncClient | None = None,
 ) -> dict | None:
     """Async interface to Amazon LookupItem API.
@@ -443,10 +442,10 @@ async def get_amazon_metadata_async(
         url = f'http://{affiliate_server_url}/isbn/{id_}?high_priority={priority}&stage_import={stage}'
 
         if client:
-            r = await client.get(url, timeout=timeout)
+            r = await client.get(url, timeout=4.0)
         else:
             async with httpx.AsyncClient() as _client:
-                r = await _client.get(url, timeout=timeout)
+                r = await _client.get(url, timeout=4.0)
 
         r.raise_for_status()
         return r.json().get('hit')
@@ -659,8 +658,7 @@ class BetterWorldBooksMetadataError(TypedDict):
 
 @public
 async def get_betterworldbooks_metadata_async(
-    isbn: str,
-    client: httpx.AsyncClient | None = None,
+    isbn: str, client: httpx.AsyncClient | None = None
 ) -> BetterWorldBooksMetadata | BetterWorldBooksMetadataError | None:
     """
     :param str isbn: Unnormalised ISBN10 or ISBN13
@@ -674,10 +672,10 @@ async def get_betterworldbooks_metadata_async(
     try:
         url = BETTERWORLDBOOKS_API_URL + isbn
         if client:
-            response = await client.get(url)
+            response = await client.get(url, timeout=4.0)
         else:
             async with httpx.AsyncClient() as _client:
-                response = await _client.get(url)
+                response = await _client.get(url, timeout=4.0)
 
         if response.status_code != 200:
             return {'error': response.text, 'code': response.status_code}
