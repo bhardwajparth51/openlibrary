@@ -6,7 +6,6 @@ import time
 from types import MappingProxyType
 from typing import Any, Literal, TypedDict
 
-import httpx
 import requests
 from dateutil import parser as isoparser
 from paapi5_python_sdk.api.default_api import DefaultApi
@@ -404,58 +403,6 @@ def search_amazon(title: str = '', author: str = '') -> dict:  # type: ignore[em
     pass
 
 
-@public
-async def get_amazon_metadata_async(
-    id_: str,
-    id_type: Literal['asin', 'isbn'] = 'isbn',
-    resources: Any = None,
-    high_priority: bool = False,
-    stage_import: bool = True,
-    client: httpx.AsyncClient | None = None,
-) -> dict | None:
-    """Async interface to Amazon LookupItem API.
-
-    :param str id_: The item id: isbn (10/13), or Amazon ASIN.
-    :param str id_type: 'isbn' or 'asin'.
-    :param bool high_priority: Priority in the import queue.
-    :param bool stage_import: stage the id_ for import if not in the cache.
-    :param client: Optional httpx.AsyncClient for connection reuse.
-    :return: A single book item's metadata, or None.
-    """
-    if not affiliate_server_url:
-        return None
-
-    if id_type == 'isbn':
-        isbn = normalize_isbn(id_)
-        if isbn is None:
-            return None
-        id_ = isbn
-        if len(id_) == 13 and id_.startswith('978'):
-            isbn = isbn_13_to_isbn_10(id_)
-            if isbn is None:
-                return None
-            id_ = isbn
-
-    try:
-        priority = "true" if high_priority else "false"
-        stage = "true" if stage_import else "false"
-        url = f'http://{affiliate_server_url}/isbn/{id_}?high_priority={priority}&stage_import={stage}'
-
-        if client:
-            r = await client.get(url, timeout=4.0)
-        else:
-            async with httpx.AsyncClient() as _client:
-                r = await _client.get(url, timeout=4.0)
-
-        r.raise_for_status()
-        return r.json().get('hit')
-    except (httpx.ConnectError, httpx.HTTPStatusError):
-        logger.exception("Affiliate Server error")
-    except Exception:
-        logger.exception(f"get_amazon_metadata_async({id_}) failed")
-    return None
-
-
 def _get_amazon_metadata(
     id_: str,
     id_type: Literal['asin', 'isbn'] = 'isbn',
@@ -657,35 +604,6 @@ class BetterWorldBooksMetadataError(TypedDict):
 
 
 @public
-async def get_betterworldbooks_metadata_async(
-    isbn: str, client: httpx.AsyncClient | None = None
-) -> BetterWorldBooksMetadata | BetterWorldBooksMetadataError | None:
-    """
-    :param str isbn: Unnormalised ISBN10 or ISBN13
-    :param client: Optional httpx.AsyncClient for connection reuse.
-    :return: Metadata for a single BWB book.
-    """
-    isbn = normalize_isbn(isbn) or isbn
-    if isbn is None:
-        return None
-
-    try:
-        url = BETTERWORLDBOOKS_API_URL + isbn
-        if client:
-            response = await client.get(url, timeout=4.0)
-        else:
-            async with httpx.AsyncClient() as _client:
-                response = await _client.get(url, timeout=4.0)
-
-        if response.status_code != 200:
-            return {'error': response.text, 'code': response.status_code}
-        return _parse_betterworldbooks_response(isbn, response.text)
-    except Exception:
-        logger.exception(f"get_betterworldbooks_metadata_async({isbn})")
-        return betterworldbooks_fmt(isbn)
-
-
-@public
 def get_betterworldbooks_metadata(
     isbn: str,
 ) -> BetterWorldBooksMetadata | BetterWorldBooksMetadataError | None:
@@ -809,6 +727,44 @@ def get_affiliate_stores(title: str, opts: dict) -> dict[str, list[dict]]:
         'primary': [store for store in [bwb, amazon] if store],
         'more': [store for store in [bookshop] if store],
     }
+
+
+@public
+def prepare_affiliate_data(title: str, opts: dict) -> dict[str, list[dict]]:
+    """Fetches store metadata synchronously and prepares store data.
+
+    This replaces the logic previously held in AffiliateLinks.html to
+    ensure better separation of concerns and avoid template network requests.
+    """
+    from openlibrary.plugins.openlibrary.code import is_bot
+
+    prices = opts.get('prices')
+    isbn = opts.get('isbn', '')
+    asin = opts.get('asin', '')
+
+    bwb_price = amazon_price = None
+
+    if not is_bot() and prices and isbn:
+        bwb_metadata = get_betterworldbooks_metadata(isbn)
+        if isinstance(bwb_metadata, dict):
+            bwb_price = bwb_metadata.get('price')
+            # Fallback to BWB's market price
+            amazon_price = bwb_metadata.get('market_price')
+
+        if not amazon_price:
+            amz_metadata = get_amazon_metadata(isbn, resources='prices')
+            if amz_metadata:
+                amazon_price = amz_metadata.get('price')
+
+    return get_affiliate_stores(
+        title,
+        {
+            'isbn': isbn,
+            'asin': asin,
+            'bwb_price': bwb_price,
+            'amazon_price': amazon_price,
+        },
+    )
 
 
 def betterworldbooks_fmt(

@@ -1,9 +1,7 @@
-import asyncio
 from abc import ABC, abstractmethod
 from datetime import datetime
 from urllib.parse import parse_qs
 
-import httpx
 import web
 from pydantic import BaseModel
 
@@ -12,9 +10,7 @@ from openlibrary.accounts import get_current_user
 from openlibrary.core.fulltext import fulltext_search_async
 from openlibrary.core.lending import compose_ia_url, get_available
 from openlibrary.core.vendors import (
-    get_affiliate_stores,
-    get_amazon_metadata_async,
-    get_betterworldbooks_metadata_async,
+    prepare_affiliate_data,
 )
 from openlibrary.i18n import gettext as _
 from openlibrary.plugins.openlibrary.lists import get_lists_async, get_user_lists
@@ -218,61 +214,9 @@ class AffiliateLinksPartial(PartialDataHandler):
         if len(args) < 2:
             raise ValueError("Unexpected amount of arguments")
 
-        macro = web.template.Template.globals['macros'].AffiliateLinks(args[0], args[1])
-        return {"partials": str(macro)}
-
-    async def generate_async(self) -> dict:
-        from openlibrary.plugins.openlibrary.code import is_bot
-
-        args = self.data.get("args", [])
-        if len(args) < 2:
-            raise ValueError("Unexpected amount of arguments")
-
         title, opts = args[0], args[1]
-        prices = opts.get('prices')
-        isbn = opts.get('isbn', '')
-        asin = opts.get('asin', '')
+        opts['prepared_stores'] = prepare_affiliate_data(title, opts)
 
-        bwb_price = amazon_price = None
-
-        # We'll fire off both provider requests at once to save time
-        if not is_bot() and prices and isbn:
-            async with httpx.AsyncClient() as client:
-                bwb_task = get_betterworldbooks_metadata_async(isbn, client=client)
-                amz_task = None
-                if asin or isbn:
-                    amz_task = get_amazon_metadata_async(
-                        isbn, resources='prices', client=client
-                    )
-
-                tasks = [bwb_task]
-                if amz_task:
-                    tasks.append(amz_task)
-
-                results = await asyncio.gather(*tasks, return_exceptions=True)
-
-                # Process results safely with explicit type narrowing for MyPy
-                res1 = results[0]
-                if isinstance(res1, dict):
-                    bwb_price = res1.get('price')
-                    # Fallback to BWB's market price
-                    amazon_price = res1.get('market_price')
-
-                if amz_task and len(results) > 1:
-                    res2 = results[1]
-                    # Prioritize direct Amazon price
-                    if isinstance(res2, dict) and res2.get('price'):
-                        amazon_price = res2.get('price')
-
-        opts['prepared_stores'] = get_affiliate_stores(
-            title,
-            {
-                'isbn': isbn,
-                'asin': asin,
-                'bwb_price': bwb_price,
-                'amazon_price': amazon_price,
-            },
-        )
         macro = web.template.Template.globals['macros'].AffiliateLinks(title, opts)
         return {"partials": str(macro)}
 

@@ -4,41 +4,23 @@ import { buildPartialsUrl } from './utils'
  * Adds functionality to fetch affiliate links asynchronously.
  *
  * Fetches and attaches partials to DOM iff any of the given affiliate link
- * sections contain a loading indicator. Uses IntersectionObserver to delay
- * fetching until the section is visible.
+ * sections contain a loading indicator.
  *
  * @param {NodeList<HTMLElement>} affiliateLinksSections Collection of each affiliate links section that is on the page
  */
 export function initAffiliateLinks(affiliateLinksSections) {
-    if (!affiliateLinksSections.length) return
+    for (const section of affiliateLinksSections) {
+        const loadingIndicator = section.querySelector('.loadingIndicator')
+        if (loadingIndicator) {
+            loadingIndicator.classList.remove('hidden')
 
-    const intersectionObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                // Unregister intersection listener
-                intersectionObserver.unobserve(entry.target)
+            const title = section.dataset.title
+            const opts = JSON.parse(section.dataset.opts)
+            const data = {args: [title, opts]}
 
-                const section = entry.target
-                const loadingIndicator = section.querySelector('.loadingIndicator')
-
-                if (loadingIndicator) {
-                    loadingIndicator.classList.remove('hidden')
-
-                    const title = section.dataset.title
-                    const opts = JSON.parse(section.dataset.opts)
-                    const data = {args: [title, opts]}
-
-                    getPartials(data, section)
-                }
-            }
-        })
-    }, {
-        root: null,
-        rootMargin: '200px',
-        threshold: 0
-    })
-
-    affiliateLinksSections.forEach(section => intersectionObserver.observe(section))
+            getPartials(data, section)
+        }
+    }
 }
 
 /**
